@@ -19,10 +19,6 @@ func Register(container *dig.Container) error {
 		return errors.Wrap(err, "failed to provide healthcheck service")
 	}
 
-	if err := container.Provide(auth.NewAuthRepostiory); err != nil {
-		return errors.Wrap(err, "failed to provide auth repository")
-	}
-
 	if err := container.Provide(auth.NewAuthService); err != nil {
 		return errors.Wrap(err, "failed to provide auth service")
 	}

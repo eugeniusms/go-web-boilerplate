@@ -17,7 +17,6 @@ type (
 	}
 )
 
-
 func (v *viewService) SystemHealthcheck() (dto.HCStatus, error) {
 	status := make([]dto.Status, 0)
 

@@ -2,101 +2,59 @@ package auth
 
 import (
 	"go-web-boilerplate/shared"
-	"go-web-boilerplate/shared/common"
 	"go-web-boilerplate/shared/dto"
-	"time"
-
-	"github.com/golang-jwt/jwt"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
 )
 
-type Service interface {
-	CreateUser(newUser dto.CreateUserRequest) (dto.CreateUserResponse, error)
-	GenerateToken(secretKey, id, email string) (string, error)
-	Login(user dto.LoginRequest) (dto.UserModel, error)
+type (
+	Service interface {
+		CheckUserExist(email string) (bool, dto.User)
+		CreateUser(user dto.User) error
+		EditUser(user dto.User) error
+		CreatePasswordReset(pw dto.PasswordReset) error
+		GetResetToken(token string, pw *dto.PasswordReset) error
+		RemovePreviousPasswordResetToken(id uint)
+	}
+
+	service struct {
+		shared shared.Holder
+	}
+)
+
+func (s *service) CheckUserExist(email string) (bool, dto.User) {
+	var user dto.User
+
+	err := s.shared.DB.First(&user, "email = ?", email).Error
+
+	return err == nil, user
 }
 
-type service struct {
-	repo   Repository
-	shared shared.Holder
+func (s *service) CreateUser(user dto.User) error {
+	err := s.shared.DB.Create(&user).Error
+	return err
 }
 
-func NewAuthService(repo Repository, holder shared.Holder) (Service, error) {
+func (s *service) EditUser(user dto.User) error {
+	err := s.shared.DB.Save(&user).Error
+	return err
+}
+
+func (s *service) CreatePasswordReset(pw dto.PasswordReset) error {
+	err := s.shared.DB.Create(&pw).Error
+	return err
+}
+
+func (s *service) GetResetToken(token string, pw *dto.PasswordReset) error {
+	err := s.shared.DB.Preload("User").First(pw, "token = ?", token).Error
+	return err
+}
+
+func (s *service) RemovePreviousPasswordResetToken(id uint) {
+	var pw dto.PasswordReset
+	s.shared.DB.Where("user_id = ?", id).Delete(&pw)
+}
+
+func NewAuthService(holder shared.Holder) (Service, error) {
 	return &service{
-		repo:   repo,
 		shared: holder,
 	}, nil
-}
-
-func (s *service) CreateUser(user dto.CreateUserRequest) (dto.CreateUserResponse, error) {
-	ok := common.IsValidEmail(user.Email)
-	if !ok {
-		return dto.CreateUserResponse{}, errors.Wrap(common.ErrUserAlreadyExist, "email is invalid")
-	}
-
-	exist, err := s.repo.CheckUserExist(user.Email)
-	if err != nil {
-		return dto.CreateUserResponse{}, errors.Wrap(err, "error checking exist email")
-	}
-
-	if exist {
-		return dto.CreateUserResponse{}, errors.Wrap(common.ErrUserAlreadyExist, "email already exists")
-	}
-
-	hashed, err := common.HashPassword(user.Password)
-	if err != nil {
-		return dto.CreateUserResponse{}, errors.Wrap(err, "error hashing password")
-	}
-
-	newUser := dto.UserModel{
-		ID:             uuid.New().String(),
-		Email:          user.Email,
-		Fullname:       user.Fullname,
-		HashedPassword: hashed,
-	}
-
-	err = s.repo.CreateUser(newUser)
-	if err != nil {
-		return dto.CreateUserResponse{}, errors.Wrap(err, "failed to create new user to db")
-	}
-
-	return dto.CreateUserResponse{
-		ID:       newUser.ID,
-		Email:    newUser.Email,
-		Fullname: newUser.Fullname,
-	}, nil
-}
-
-func (s *service) GenerateToken(secretKey, id, email string) (string, error) {
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["id"] = id
-	claims["email"] = email
-	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
-
-	signedToken, err := token.SignedString([]byte(secretKey))
-	if err != nil {
-		return "", errors.Wrap(err, "failed to generate jwt token")
-	}
-
-	return signedToken, nil
-}
-
-func (s *service) Login(user dto.LoginRequest) (dto.UserModel, error) {
-	u, err := s.repo.GetUserByEmail(user.Email)
-	if errors.Cause(err) == common.ErrUnregisteredEmail {
-		return dto.UserModel{}, err
-	}
-
-	if err != nil {
-		return dto.UserModel{}, errors.Wrap(err, "failed to find user by email")
-	}
-
-	ok := common.CheckPasswordHash(user.Password, u.HashedPassword)
-	if !ok {
-		return dto.UserModel{}, common.ErrIncorrectEmailOrPassword
-	}
-
-	return u, nil
 }

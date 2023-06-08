@@ -10,22 +10,22 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// @title Go Web Boilerplate
+// @title Go Web Boilerplate Server
 // @version 1.0
-// @description API definition for Go Web Boilerplate
+// @description API definition for Go Web Boilerplate Server
 // @host localhost:8000
 // @BasePath /
 func main() {
 	container := di.Container
 
-	err := container.Invoke(func(http *fiber.App, env *config.EnvConfig, holder infrastructure.Holder) error {	
+	err := container.Invoke(func(http *fiber.App, env *config.EnvConfig, holder infrastructure.Holder) error {
 		infrastructure.Routes(http, holder)
 
 		err := http.Listen(":" + env.PORT)
 		if err != nil {
 			return err
 		}
-		
+
 		return nil
 	})
 

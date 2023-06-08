@@ -1,5 +1,71 @@
 basePath: /
 definitions:
+  dto.CreateUserRequest:
+    properties:
+      email:
+        type: string
+      fullname:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - fullname
+    - password
+    type: object
+  dto.CreateUserResponse:
+    properties:
+      email:
+        type: string
+      fullname:
+        type: string
+    type: object
+  dto.EditUserRequest:
+    properties:
+      fullname:
+        type: string
+    required:
+    - fullname
+    type: object
+  dto.EditUserResponse:
+    properties:
+      email:
+        type: string
+      fullname:
+        type: string
+    type: object
+  dto.ForgotPasswordRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.LoginResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  dto.ResetPasswordRequest:
+    properties:
+      password:
+        type: string
+      token:
+        type: string
+    required:
+    - password
+    - token
+    type: object
   dto.Status:
     properties:
       data: {}
@@ -15,6 +81,121 @@ info:
   title: Go Web Boilerplate Server
   version: "1.0"
 paths:
+  /auth/edit:
+    put:
+      consumes:
+      - application/json
+      description: Put all mandatory parameter
+      parameters:
+      - description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: EditUserRequest
+        in: body
+        name: EditUserRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.EditUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.EditUserResponse'
+      summary: Edit user
+      tags:
+      - Auth
+  /auth/forgotPassword:
+    post:
+      consumes:
+      - application/json
+      description: Put all mandatory parameter
+      parameters:
+      - description: ForgotPasswordRequest
+        in: body
+        name: ForgotPasswordRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ForgotPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ForgotPasswordRequest'
+      summary: Forgot password
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Put all mandatory parameter
+      parameters:
+      - description: LoginRequest
+        in: body
+        name: LoginRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Put all mandatory parameter
+      parameters:
+      - description: CreateUserRequest
+        in: body
+        name: CreateUserRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CreateUserResponse'
+      summary: Register new user
+      tags:
+      - Auth
+  /auth/resetPassword:
+    post:
+      consumes:
+      - application/json
+      description: Put all mandatory parameter
+      parameters:
+      - description: ResetPasswordRequest
+        in: body
+        name: ResetPasswordRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ResetPasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.ResetPasswordRequest'
+      summary: Reset password
+      tags:
+      - Auth
   /healthcheck:
     get:
       consumes:

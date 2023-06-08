@@ -45,8 +45,10 @@ func setConnectionConfiguration(db *gorm.DB) {
 
 func migrateSchema(db *gorm.DB, log *logrus.Logger) {
 	err := db.AutoMigrate(
-		&dto.UserModel{},
+		&dto.User{},
+		&dto.PasswordReset{},
 	)
+
 	if err != nil {
 		log.Errorf("error migrating schema, err: %s", err.Error())
 	}

@@ -6,34 +6,84 @@ import (
 	"gorm.io/gorm"
 )
 
-type CreateUserRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Fullname string `json:"fullname"`
-}
+type (
+	User struct {
+		ID             uint   `gorm:"primaryKey;autoIncrement"`
+		Email          string `gorm:"column:email;unique;not null"`
+		Fullname       string `gorm:"column:fullname"`
+		HashedPassword string `gorm:"column:hashed_password"`
+		CreatedAt      time.Time
+		UpdatedAt      time.Time
+		DeletedAt      gorm.DeletedAt
+	}
 
-type CreateUserResponse struct {
-	ID       string `json:"id"`
-	Email    string `json:"email"`
-	Fullname string `json:"fullname"`
-	Token    string `json:"token"`
-}
+	PasswordReset struct {
+		ID        uint `gorm:"primaryKey;autoIncrement"`
+		UserID    uint
+		User      User   `gorm:"onDelete:CASCADE"`
+		Token     string `gorm:"column:token"`
+		CreatedAt time.Time
+		Valid     time.Time
+	}
 
-type UserModel struct {
-	ID             string    `gorm:"column:id;unique;not null"`
-	Email          string    `gorm:"column:email;unique;not null"`
-	Fullname       string    `gorm:"column:fullname"`
-	HashedPassword string    `gorm:"column:hashed_password"`
-	CreatedAt      time.Time `gorm:"column:created_at"`
-	UpdatedAt      time.Time `gorm:"column:updated_at"`
-	DeletedAt      gorm.DeletedAt
-}
+	// CreateUserRequest CreateUserRequest
+	CreateUserRequest struct {
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required"`
+		Fullname string `json:"fullname" validate:"required"`
+	}
 
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
+	// CreateUserResponse CreateUserResponse
+	CreateUserResponse struct {
+		Email    string `json:"email"`
+		Fullname string `json:"fullname"`
+	}
 
-type LoginResponse struct {
-	Token string `json:"token"`
+	// LoginRequest LoginRequest
+	LoginRequest struct {
+		Email    string `json:"email" validate:"required,email"`
+		Password string `json:"password" validate:"required"`
+	}
+
+	// LoginResponse LoginResponse
+	LoginResponse struct {
+		Token string `json:"token"`
+	}
+
+	// EditUserRequest EditUserRequest
+
+	EditUserRequest struct {
+		Fullname string `json:"fullname" validate:"required"`
+	}
+
+	EditUserPayload struct {
+		Fullname string
+		ID       float64
+		Email    string
+	}
+
+	// EditUserResponse EditUserResponse
+	EditUserResponse struct {
+		Email    string `json:"email"`
+		Fullname string `json:"fullname"`
+	}
+
+	// ForgotPasswordRequest ForgotPasswordRequest
+	ForgotPasswordRequest struct {
+		Email string `json:"email" validate:"required,email"`
+	}
+
+	// ResetPasswordRequest ResetPasswordRequest
+	ResetPasswordRequest struct {
+		Password string `json:"password" validate:"required"`
+		Token    string `json:"token" validate:"required"`
+	}
+)
+
+func (r *CreateUserRequest) TransformToUserModel(hp string) User {
+	return User{
+		Email:          r.Email,
+		Fullname:       r.Fullname,
+		HashedPassword: hp,
+	}
 }
