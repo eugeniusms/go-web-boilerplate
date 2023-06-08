@@ -8,7 +8,7 @@ import (
 
 type ViewService interface {
 	RegisterUser(req dto.CreateUserRequest) (dto.CreateUserResponse, error)
-	// Login(req dto.LoginRequest) (dto.LoginResponse, error)
+	Login(req dto.LoginRequest) (dto.LoginResponse, error)
 }
 
 type viewService struct {
@@ -36,4 +36,20 @@ func (v *viewService) RegisterUser(req dto.CreateUserRequest) (dto.CreateUserRes
 
 	resp.Token = token
 	return resp, nil
+}
+
+func (v *viewService) Login(req dto.LoginRequest) (dto.LoginResponse, error) {
+	user, err := v.application.AuthService.Login(req)
+	if err != nil {
+		return dto.LoginResponse{}, err
+	}
+
+	token, err := v.application.AuthService.GenerateToken(v.shared.Env.SecretKey, user.ID, user.Email)
+	if err != nil {
+		return dto.LoginResponse{}, err
+	}
+
+	return dto.LoginResponse{
+		Token: token,
+	}, nil
 }
