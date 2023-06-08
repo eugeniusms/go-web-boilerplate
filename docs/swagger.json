@@ -1,0 +1,47 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "API definition for Go Web Boilerplate Server",
+    "title": "Go Web Boilerplate Server",
+    "contact": {},
+    "version": "1.0"
+  },
+  "host": "localhost:8000",
+  "basePath": "/",
+  "paths": {
+    "/healthcheck": {
+      "get": {
+        "description": "Put all mandatory parameter",
+        "consumes": ["application/json"],
+        "produces": ["application/json"],
+        "tags": ["Healthcheck"],
+        "summary": "Check system status",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/dto.Status"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "dto.Status": {
+      "type": "object",
+      "properties": {
+        "data": {},
+        "name": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

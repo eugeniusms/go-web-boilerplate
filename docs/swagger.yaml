@@ -1,0 +1,35 @@
+basePath: /
+definitions:
+  dto.Status:
+    properties:
+      data: {}
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+host: localhost:8000
+info:
+  contact: {}
+  description: API definition for Go Web Boilerplate Server
+  title: Go Web Boilerplate Server
+  version: "1.0"
+paths:
+  /healthcheck:
+    get:
+      consumes:
+      - application/json
+      description: Put all mandatory parameter
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.Status'
+            type: array
+      summary: Check system status
+      tags:
+      - Healthcheck
+swagger: "2.0"

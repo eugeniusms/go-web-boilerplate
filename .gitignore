@@ -1,2 +1,5 @@
+server
+logger.log
 .DS_Store
 .env
+.idea
