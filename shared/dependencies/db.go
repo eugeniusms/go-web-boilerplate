@@ -3,6 +3,7 @@ package depedencies
 import (
 	"fmt"
 	"go-web-boilerplate/shared/config"
+	"go-web-boilerplate/shared/dto"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -30,6 +31,8 @@ func NewDatabase(env *config.EnvConfig, log *logrus.Logger) *gorm.DB {
 
 	log.Infoln("connected to databse with configuration: %s", dsn)
 
+	migrateSchema(db, log)
+
 	return db
 }
 
@@ -38,4 +41,15 @@ func setConnectionConfiguration(db *gorm.DB) {
 	postgresDb.SetMaxIdleConns(10)
 	postgresDb.SetMaxOpenConns(100)
 	postgresDb.SetConnMaxLifetime(time.Hour)
+}
+
+func migrateSchema(db *gorm.DB, log *logrus.Logger) {
+	err := db.AutoMigrate(
+		&dto.UserModel{},
+	)
+	if err != nil {
+		log.Errorf("error migrating schema, err: %s", err.Error())
+	}
+
+	log.Infoln("database migrated")
 }
