@@ -42,7 +42,7 @@ func (c *Controller) login(ctx *fiber.Ctx) error {
 
 func (c *Controller) Routes(app *fiber.App) {
 	auth := app.Group("/auth")
-	auth.Get("/register", c.register)
+	auth.Post("/register", c.register)
 	auth.Post("/login", c.login)
 }
 
