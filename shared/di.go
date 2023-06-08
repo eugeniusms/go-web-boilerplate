@@ -3,6 +3,7 @@ package shared
 import (
 	"go-web-boilerplate/shared/config"
 	depedencies "go-web-boilerplate/shared/dependencies"
+	"go-web-boilerplate/shared/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
@@ -13,10 +14,11 @@ import (
 
 type Holder struct {
 	dig.In
-	Logger *logrus.Logger
-	Env    *config.EnvConfig
-	Http   *fiber.App
-	DB     *gorm.DB
+	Logger     *logrus.Logger
+	Env        *config.EnvConfig
+	Http       *fiber.App
+	DB         *gorm.DB
+	Middleware *middleware.Middleware
 }
 
 func Register(container *dig.Container) error {
@@ -33,6 +35,10 @@ func Register(container *dig.Container) error {
 	}
 
 	if err := container.Provide(depedencies.NewDatabase); err != nil {
+		return errors.Wrap(err, "failed to provide db")
+	}
+
+	if err := container.Provide(middleware.NewMiddleware); err != nil {
 		return errors.Wrap(err, "failed to provide db")
 	}
 
