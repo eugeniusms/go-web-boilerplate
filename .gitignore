@@ -1,5 +1,6 @@
 server
 logger.log
 .DS_Store
+.gitconfig
 .env
 .idea

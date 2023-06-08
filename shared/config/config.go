@@ -1,18 +1,21 @@
 package config
 
 import (
+	"reflect"
+
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 )
 
 type EnvConfig struct {
-	PORT       string `mapstructure:"PORT"`
-	DBHost     string `mapstructure:"DB_HOST"`
-	DBUser     string `mapstructure:"DB_USER"`
-	DBPassword string `mapstructure:"DB_PASSWORD"`
-	DBName     string `mapstructure:"DB_NAME"`
-	DBPort     string `mapstructure:"DB_PORT"`
-	ENV        string `mapstructure:"ENV"`
+	PORT            string `mapstructure:"PORT"               default:"8000"`
+	DBHost          string `mapstructure:"DB_HOST"            default:"localhost"`
+	DBUser          string `mapstructure:"DB_USER"            default:""`
+	DBPassword      string `mapstructure:"DB_PASSWORD"        default:""`
+	DBName          string `mapstructure:"DB_NAME"            default:""`
+	DBPort          string `mapstructure:"DB_PORT"            default:""`
+	ENV             string `mapstructure:"ENV"                default:""`
+	IsPrettyLogging bool   `mapstructure:"IS_PRETTY_LOGGING"  default:"true"`
 }
 
 func NewEnvConfig(log *logrus.Logger) (*EnvConfig, error) {
@@ -25,6 +28,14 @@ func NewEnvConfig(log *logrus.Logger) (*EnvConfig, error) {
 	if err != nil {
 		log.Errorf("error while reading config: %s", err.Error())
 		return nil, err
+	}
+
+	fields := reflect.VisibleFields(reflect.TypeOf(EnvConfig{}))
+	for _, field := range fields {
+		key := field.Tag.Get("mapstructure")
+		def := field.Tag.Get("default")
+
+		viper.SetDefault(key, def)
 	}
 
 	err = viper.Unmarshal(&config)
