@@ -16,6 +16,7 @@ type EnvConfig struct {
 	DBPort          string `mapstructure:"DB_PORT"            default:""`
 	ENV             string `mapstructure:"ENV"                default:""`
 	IsPrettyLogging bool   `mapstructure:"IS_PRETTY_LOGGING"  default:"true"`
+	SecretKey       string `mapstructure:"SECRET_KEY"         default:"this_is_not_secret"`
 }
 
 func NewEnvConfig(log *logrus.Logger) (*EnvConfig, error) {
