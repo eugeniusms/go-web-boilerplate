@@ -15,6 +15,7 @@ type CreateUserRequest struct {
 type CreateUserResponse struct {
 	Email    string `json:"email"`
 	Fullname string `json:"fullname"`
+	Token    string `json:"token"`
 }
 
 type UserModel struct {
