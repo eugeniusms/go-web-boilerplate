@@ -13,7 +13,7 @@ import (
 
 type Service interface {
 	CreateUser(newUser dto.CreateUserRequest) (dto.CreateUserResponse, error)
-	GenerateToken(secretKey, email string) (string, error)
+	GenerateToken(secretKey, id, email string) (string, error)
 	Login(user dto.LoginRequest) (bool, error)
 }
 
@@ -62,14 +62,16 @@ func (s *service) CreateUser(user dto.CreateUserRequest) (dto.CreateUserResponse
 	}
 
 	return dto.CreateUserResponse{
+		ID:       newUser.ID,
 		Email:    newUser.Email,
 		Fullname: newUser.Fullname,
 	}, nil
 }
 
-func (s *service) GenerateToken(secretKey string, email string) (string, error) {
+func (s *service) GenerateToken(secretKey, id, email string) (string, error) {
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
+	claims["id"] = id
 	claims["email"] = email
 	claims["exp"] = time.Now().Add(time.Hour * 24).Unix()
 
