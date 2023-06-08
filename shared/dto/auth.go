@@ -27,3 +27,12 @@ type UserModel struct {
 	UpdatedAt      time.Time `gorm:"column:updated_at"`
 	DeletedAt      gorm.DeletedAt
 }
+
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
+type LoginResponse struct {
+	Token string `json:"token"`
+}
