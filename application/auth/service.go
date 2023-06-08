@@ -13,7 +13,8 @@ import (
 
 type Service interface {
 	CreateUser(newUser dto.CreateUserRequest) (dto.CreateUserResponse, error)
-	GenerateToken(secretKey string, email string) (string, error)
+	GenerateToken(secretKey, email string) (string, error)
+	Login(user dto.LoginRequest) (bool, error)
 }
 
 type service struct {
@@ -78,4 +79,22 @@ func (s *service) GenerateToken(secretKey string, email string) (string, error) 
 	}
 
 	return signedToken, nil
+}
+
+func (s *service) Login(user dto.LoginRequest) (bool, error) {
+	u, err := s.repo.GetUserByEmail(user.Email)
+	if errors.Cause(err) == common.ErrUnregisteredEmail {
+		return false, err
+	}
+
+	if err != nil {
+		return false, errors.Wrap(err, "failed to find user by email")
+	}
+
+	ok := common.CheckPasswordHash(user.Password, u.HashedPassword)
+	if !ok {
+		return false, common.ErrIncorrectEmailOrPassword
+	}
+
+	return ok, nil
 }
