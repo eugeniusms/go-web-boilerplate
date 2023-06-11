@@ -1,6 +1,22 @@
 # Go Web Boilerplate
-This boilerplate is for applications using go with Postgres as the database.
-
+This boilerplate is for applications using go with Postgres as the database.<br>
+Lib used:<br>
+- github.com/go-playground/validator/v10 
+- github.com/goccy/go-json 
+- github.com/gofiber/fiber/v2 
+- github.com/gofiber/swagger 
+- github.com/golang-jwt/jwt 
+- github.com/golang-module/carbon 
+- github.com/kelseyhightower/envconfig 
+- github.com/pkg/errors 
+- github.com/sendinblue/APIv3-go-library/v2 
+- github.com/sirupsen/logrus 
+- github.com/swaggo/swag 
+- github.com/twharmon/gouid 
+- go.uber.org/dig
+- golang.org/x/crypto 
+- gorm.io/driver/postgres 
+- gorm.io/gorm 
 ## Getting started
 First, clone this project with the following command:
 ```
@@ -25,19 +41,8 @@ go build
 ```
 This will generate an executable file named `<YourAppName>`.
 
-# References
-## STACKS
-- Test : Testify
-- Database : Postgres
-- Authentication : JWT & OAuth2 (Google)
-## GO WIKI
+## Wiki
 - SQL Drivers : https://github.com/golang/go/wiki/SQLDrivers
-
-## DEPENDENCIES
-- HTTP Router : github.com/julienschmidt/httprouter
-- PostgreSQL Driver : github.com/lib/pq
-- Testing : github.com/stretchr/testify
-- Validator : github.com/go-playground/validator
 
 ## Contribute
 Feel free to contribute, this project will be greater for anyone.
