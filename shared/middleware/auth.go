@@ -3,7 +3,6 @@ package middleware
 import (
 	"fmt"
 	"go-web-boilerplate/shared/config"
-	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt"
@@ -17,45 +16,48 @@ type Middleware struct {
 }
 
 func (m *Middleware) AuthMiddleware(c *fiber.Ctx) error {
-	authHeader := c.Get("Authorization")
+	claims, err := m.getToken(m.Env.SecretKey, c)
 
-	if authHeader == "" {
-		return fiber.ErrUnauthorized
+	if err != nil {
+		return err
 	}
 
-	tokenString := strings.Split(authHeader, " ")[1]
+	c.Locals("id", uint(claims["id"].(float64)))
 
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+	return c.Next()
+}
+
+func (m *Middleware) getToken(secret string, c *fiber.Ctx) (jwt.MapClaims, error) {
+	header := c.Get("Authorization", "")
+
+	if header == "" {
+		return nil, fiber.ErrUnauthorized
+	}
+
+	token, err := jwt.Parse(header, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
-		return []byte(m.Env.SecretKey), nil
+		return []byte(secret), nil
 	})
 
 	if err != nil {
-		return fiber.ErrUnauthorized
-	}
-
-	if !token.Valid {
-		return fiber.ErrUnauthorized
+		return nil, err
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return fiber.ErrUnauthorized
+		return nil, fiber.ErrUnauthorized
 	}
 
 	m.log.Infof("Attempting auth check with header claims: %s", claims)
 
 	exp, ok := claims["exp"].(float64)
 	if !ok || carbon.Now().Timestamp() > int64(exp) {
-		return fiber.ErrUnauthorized
+		return nil, fiber.ErrUnauthorized
 	}
 
-	c.Locals("email", claims["email"])
-	c.Locals("id", claims["id"])
-
-	return c.Next()
+	return claims, nil
 }
 
 func NewMiddleware(env *config.EnvConfig, log *logrus.Logger) *Middleware {

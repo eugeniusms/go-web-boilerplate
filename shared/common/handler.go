@@ -1,6 +1,9 @@
 package common
 
 import (
+	"go-web-boilerplate/application/auth"
+	"go-web-boilerplate/shared/dto"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/pkg/errors"
@@ -41,4 +44,8 @@ func DoCommonErrorResponse(ctx *fiber.Ctx, err error) error {
 		Status: "FAILED",
 		Error:  err.Error(),
 	})
+}
+
+func CreateUserContext(ctx *fiber.Ctx, qr auth.Service) dto.User {
+	return qr.GetUserContext(ctx.Locals("id").(uint))
 }

@@ -10,8 +10,8 @@ import (
 
 type Holder struct {
 	dig.In
-	HealthcheckService healthcheck.Service
-	AuthService        auth.Service
+	HealthcheckService  healthcheck.Service
+	AuthService         auth.Service
 }
 
 func Register(container *dig.Container) error {
@@ -22,6 +22,6 @@ func Register(container *dig.Container) error {
 	if err := container.Provide(auth.NewAuthService); err != nil {
 		return errors.Wrap(err, "failed to provide auth service")
 	}
-
+	
 	return nil
 }

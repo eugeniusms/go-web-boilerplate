@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"go-web-boilerplate/application"
 	"go-web-boilerplate/interfaces"
 	"go-web-boilerplate/shared"
 	"go-web-boilerplate/shared/common"
@@ -10,17 +11,20 @@ import (
 )
 
 type Controller struct {
-	Interfaces interfaces.Holder
-	Shared     shared.Holder
+	Interfaces  interfaces.Holder
+	Shared      shared.Holder
+	Application application.Holder
 }
 
 func (c *Controller) Routes(app *fiber.App) {
 	auth := app.Group("/auth")
 	auth.Post("/register", c.register)
 	auth.Post("/login", c.login)
+	auth.Post("/loginGoogle", c.loginGoogle)
 	auth.Put("/edit", c.Shared.Middleware.AuthMiddleware, c.edit)
 	auth.Post("/forgotPassword", c.forgotPassword)
 	auth.Post("/resetPassword", c.resetPassword)
+	auth.Get("/credential", c.Shared.Middleware.AuthMiddleware, c.userCredential)
 }
 
 // All godoc
@@ -57,6 +61,37 @@ func (c *Controller) register(ctx *fiber.Ctx) error {
 // All godoc
 // @Tags Auth
 // @Summary Login user
+// @Description Put all mandatory parameter
+// @Param GoogleLoginRequest body dto.GoogleLoginRequest true "GoogleLoginRequest"
+// @Accept  json
+// @Produce  json
+// @Success 200 {object} dto.LoginResponse
+// @Failure 200 {object} dto.LoginResponse
+// @Router /auth/loginGoogle [post]
+func (c *Controller) loginGoogle(ctx *fiber.Ctx) error {
+	var (
+		req dto.GoogleLoginRequest
+		res dto.LoginResponse
+	)
+
+	err := common.DoCommonRequest(ctx, &req)
+	if err != nil {
+		return common.DoCommonErrorResponse(ctx, err)
+	}
+
+	c.Shared.Logger.Infof("login user google with payload: %s", req)
+
+	res, err = c.Interfaces.AuthViewService.GoogleLogin(req)
+	if err != nil {
+		return common.DoCommonErrorResponse(ctx, err)
+	}
+
+	return common.DoCommonSuccessResponse(ctx, res)
+}
+
+// All godoc
+// @Tags Auth
+// @Summary Login user google
 // @Description Put all mandatory parameter
 // @Param LoginRequest body dto.LoginRequest true "LoginRequest"
 // @Accept  json
@@ -98,9 +133,8 @@ func (c *Controller) login(ctx *fiber.Ctx) error {
 // @Router /auth/edit [put]
 func (c *Controller) edit(ctx *fiber.Ctx) error {
 	var (
-		req     dto.EditUserRequest
-		res     dto.EditUserResponse
-		payload dto.EditUserPayload
+		req dto.EditUserRequest
+		res dto.EditUserResponse
 	)
 
 	err := common.DoCommonRequest(ctx, &req)
@@ -108,15 +142,11 @@ func (c *Controller) edit(ctx *fiber.Ctx) error {
 		return common.DoCommonErrorResponse(ctx, err)
 	}
 
-	payload = dto.EditUserPayload{
-		ID:       ctx.Locals("id").(float64),
-		Email:    ctx.Locals("email").(string),
-		Fullname: req.Fullname,
-	}
+	c.Shared.Logger.Infof("edit user with payload: %s", req)
 
-	c.Shared.Logger.Infof("edit user with payload: %s", payload)
+	user := common.CreateUserContext(ctx, c.Application.AuthService)
 
-	res, err = c.Interfaces.AuthViewService.EditUser(payload)
+	res, err = c.Interfaces.AuthViewService.EditUser(req, user)
 	if err != nil {
 		return common.DoCommonErrorResponse(ctx, err)
 	}
@@ -180,9 +210,27 @@ func (c *Controller) resetPassword(ctx *fiber.Ctx) error {
 	return common.DoCommonSuccessResponse(ctx, nil)
 }
 
-func NewController(interfaces interfaces.Holder, shared shared.Holder) Controller {
+// All godoc
+// @Tags Auth
+// @Summary Get user credential
+// @Param Authorization header string true "Authorization"
+// @Description Put all mandatory parameter
+// @Accept  json
+// @Produce  json
+// @Success 200
+// @Router /auth/credential [get]
+func (c *Controller) userCredential(ctx *fiber.Ctx) error {
+	user := common.CreateUserContext(ctx, c.Application.AuthService)
+
+	user = c.Interfaces.AuthViewService.GetUserCredential(user)
+
+	return common.DoCommonSuccessResponse(ctx, user)
+}
+
+func NewController(interfaces interfaces.Holder, shared shared.Holder, application application.Holder) Controller {
 	return Controller{
-		Interfaces: interfaces,
-		Shared:     shared,
+		Interfaces:  interfaces,
+		Shared:      shared,
+		Application: application,
 	}
 }

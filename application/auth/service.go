@@ -13,6 +13,8 @@ type (
 		CreatePasswordReset(pw dto.PasswordReset) error
 		GetResetToken(token string, pw *dto.PasswordReset) error
 		RemovePreviousPasswordResetToken(id uint)
+		GetUserContext(id uint) dto.User
+		ListUser(preload string) dto.UserSlice
 	}
 
 	service struct {
@@ -51,6 +53,20 @@ func (s *service) GetResetToken(token string, pw *dto.PasswordReset) error {
 func (s *service) RemovePreviousPasswordResetToken(id uint) {
 	var pw dto.PasswordReset
 	s.shared.DB.Where("user_id = ?", id).Delete(&pw)
+}
+
+func (s *service) GetUserContext(id uint) dto.User {
+	var user dto.User
+	s.shared.DB.Where("id = ?", id).First(&user)
+	return user
+}
+
+func (s *service) ListUser(preload string) dto.UserSlice {
+	var users []dto.User
+
+	s.shared.DB.Preload(preload).Find(&users)
+
+	return users
 }
 
 func NewAuthService(holder shared.Holder) (Service, error) {

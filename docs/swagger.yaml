@@ -24,8 +24,8 @@ definitions:
     properties:
       fullname:
         type: string
-    required:
-    - fullname
+      password:
+        type: string
     type: object
   dto.EditUserResponse:
     properties:
@@ -40,6 +40,13 @@ definitions:
         type: string
     required:
     - email
+    type: object
+  dto.GoogleLoginRequest:
+    properties:
+      token:
+        type: string
+    required:
+    - token
     type: object
   dto.LoginRequest:
     properties:
@@ -81,6 +88,25 @@ info:
   title: Go Web Boilerplate Server
   version: "1.0"
 paths:
+  /auth/credential:
+    get:
+      consumes:
+      - application/json
+      description: Put all mandatory parameter
+      parameters:
+      - description: Authorization
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+      summary: Get user credential
+      tags:
+      - Auth
   /auth/edit:
     put:
       consumes:
@@ -142,6 +168,28 @@ paths:
         required: true
         schema:
           $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.LoginResponse'
+      summary: Login user google
+      tags:
+      - Auth
+  /auth/loginGoogle:
+    post:
+      consumes:
+      - application/json
+      description: Put all mandatory parameter
+      parameters:
+      - description: GoogleLoginRequest
+        in: body
+        name: GoogleLoginRequest
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GoogleLoginRequest'
       produces:
       - application/json
       responses:

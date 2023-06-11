@@ -2,12 +2,15 @@ package auth
 
 import (
 	"errors"
-	"fmt"
 	"go-web-boilerplate/application"
 	"go-web-boilerplate/shared"
 	"go-web-boilerplate/shared/common"
 	"go-web-boilerplate/shared/dto"
+	"io/ioutil"
+	"net/http"
 
+	"github.com/goccy/go-json"
+	"github.com/golang-jwt/jwt"
 	"github.com/golang-module/carbon"
 	"github.com/twharmon/gouid"
 	"golang.org/x/crypto/bcrypt"
@@ -17,9 +20,11 @@ type (
 	ViewService interface {
 		RegisterUser(req dto.CreateUserRequest) (dto.CreateUserResponse, error)
 		Login(req dto.LoginRequest) (dto.LoginResponse, error)
-		EditUser(req dto.EditUserPayload) (dto.EditUserResponse, error)
+		EditUser(req dto.EditUserRequest, user dto.User) (dto.EditUserResponse, error)
 		ForgotPassword(req dto.ForgotPasswordRequest) error
 		ResetPassword(req dto.ResetPasswordRequest) error
+		GetUserCredential(user dto.User) dto.User
+		GoogleLogin(req dto.GoogleLoginRequest) (dto.LoginResponse, error)
 	}
 
 	viewService struct {
@@ -74,7 +79,10 @@ func (v *viewService) Login(req dto.LoginRequest) (dto.LoginResponse, error) {
 		return res, errors.New("incorrect password")
 	}
 
-	token, err := common.GenerateToken(v.shared.Env.SecretKey, user)
+	token, err := common.GenerateToken(v.shared.Env.SecretKey, jwt.MapClaims{
+		"id":  user.ID,
+		"exp": carbon.Now().AddDay().Timestamp(),
+	})
 	if err != nil {
 		return res, err
 	}
@@ -86,17 +94,71 @@ func (v *viewService) Login(req dto.LoginRequest) (dto.LoginResponse, error) {
 	return res, nil
 }
 
-func (v *viewService) EditUser(req dto.EditUserPayload) (dto.EditUserResponse, error) {
+func (v *viewService) GoogleLogin(req dto.GoogleLoginRequest) (dto.LoginResponse, error) {
+	var (
+		res        dto.LoginResponse
+		googleData dto.GoogleData
+		googleURL  = "https://www.googleapis.com/oauth2/v2/userinfo?access_token="
+	)
+
+	resp, err := http.Get(googleURL + req.Token)
+	if err != nil {
+		return res, err
+	}
+	defer resp.Body.Close()
+
+	response, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return res, err
+	}
+
+	json.Unmarshal(response, &googleData)
+
+	isUserExist, user := v.application.AuthService.CheckUserExist(googleData.Email)
+	if !isUserExist {
+		user = googleData.ToUser()
+		err = v.application.AuthService.CreateUser(user)
+		if err != nil {
+			return res, err
+		}
+	}
+
+	token, err := common.GenerateToken(v.shared.Env.SecretKey, jwt.MapClaims{
+		"id":  user.ID,
+		"exp": carbon.Now().AddDay().Timestamp(),
+	})
+	if err != nil {
+		return res, err
+	}
+
+	res = dto.LoginResponse{
+		Token: token,
+	}
+
+	return res, nil
+}
+
+func (v *viewService) EditUser(req dto.EditUserRequest, user dto.User) (dto.EditUserResponse, error) {
 	var (
 		res dto.EditUserResponse
 	)
 
-	isUserExist, user := v.application.AuthService.CheckUserExist(req.Email)
+	isUserExist, user := v.application.AuthService.CheckUserExist(user.Email)
 	if !isUserExist {
 		return res, errors.New("no user found for given email")
 	}
 
-	user.Fullname = req.Fullname
+	if req.Fullname != "" {
+		user.Fullname = req.Fullname
+	}
+
+	if req.Password != "" {
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), 14)
+		if err != nil {
+			return res, err
+		}
+		user.HashedPassword = string(hashedPassword)
+	}
 
 	err := v.application.AuthService.EditUser(user)
 	if err != nil {
@@ -104,7 +166,7 @@ func (v *viewService) EditUser(req dto.EditUserPayload) (dto.EditUserResponse, e
 	}
 
 	res = dto.EditUserResponse{
-		Email:    req.Email,
+		Email:    user.Email,
 		Fullname: req.Fullname,
 	}
 
@@ -117,9 +179,13 @@ func (v *viewService) ForgotPassword(req dto.ForgotPasswordRequest) error {
 		return errors.New("no user found for given email")
 	}
 
+	v.application.AuthService.RemovePreviousPasswordResetToken(user.ID)
+
+	token := gouid.String(6, gouid.LowerCaseAlphaNum)
+
 	fpwEntry := dto.PasswordReset{
 		UserID: user.ID,
-		Token:  gouid.String(6, gouid.LowerCaseAlphaNum),
+		Token:  token,
 		Valid:  carbon.Now().AddMinutes(5).ToStdTime(),
 	}
 
@@ -128,7 +194,12 @@ func (v *viewService) ForgotPassword(req dto.ForgotPasswordRequest) error {
 		return err
 	}
 
-	// ToDo: send email to user
+	mail := common.MailerRequest{
+		Email: req.Email,
+		Name:  user.Fullname,
+	}
+
+	go mail.Mailer(v.shared.Env, v.shared.Logger, token)
 
 	return nil
 }
@@ -152,7 +223,6 @@ func (v *viewService) ResetPassword(req dto.ResetPasswordRequest) error {
 		return err
 	}
 
-	fmt.Println(pw.User)
 	pw.User.HashedPassword = string(hashedPassword)
 
 	err = v.application.AuthService.EditUser(pw.User)
@@ -163,6 +233,11 @@ func (v *viewService) ResetPassword(req dto.ResetPasswordRequest) error {
 	go v.application.AuthService.RemovePreviousPasswordResetToken(pw.UserID)
 
 	return nil
+}
+
+func (v *viewService) GetUserCredential(user dto.User) dto.User {
+	user.HashedPassword = ""
+	return user
 }
 
 func NewViewService(application application.Holder, shared shared.Holder) ViewService {

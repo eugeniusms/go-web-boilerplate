@@ -11,8 +11,8 @@ import (
 
 type Holder struct {
 	dig.In
-	Healthcheck healthcheck.Controller
-	Auth        auth.Controller
+	Healthcheck  healthcheck.Controller
+	Auth         auth.Controller
 }
 
 func Register(container *dig.Container) error {

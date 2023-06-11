@@ -33,6 +33,8 @@ func NewDatabase(env *config.EnvConfig, log *logrus.Logger) *gorm.DB {
 
 	migrateSchema(db, log)
 
+	seedDB(db, log)
+
 	return db
 }
 
@@ -54,4 +56,8 @@ func migrateSchema(db *gorm.DB, log *logrus.Logger) {
 	}
 
 	log.Infoln("database migrated")
+}
+
+func seedDB(db *gorm.DB, log *logrus.Logger) {
+	log.Infoln("finish seeding data")
 }

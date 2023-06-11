@@ -9,10 +9,12 @@ services:
     ports:
       - 8000:8000
     restart: always
+    env_file:
+      - .env
     depends_on:
       - db
     networks:
-      - server
+      - go_web_boilerplate
   db:
     image: postgres:13.3-alpine
     volumes:
@@ -25,7 +27,7 @@ services:
     ports:
       - "5433:5432"
     networks:
-      - server
+      - go_web_boilerplate
 volumes:
   db-data:
     driver: local

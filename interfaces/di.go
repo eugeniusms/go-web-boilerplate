@@ -10,8 +10,8 @@ import (
 
 type Holder struct {
 	dig.In
-	HealthcheckViewService healthcheck.ViewService
-	AuthViewService        auth.ViewService
+	HealthcheckViewService  healthcheck.ViewService
+	AuthViewService         auth.ViewService
 }
 
 func Register(container *dig.Container) error {

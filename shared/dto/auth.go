@@ -6,16 +6,25 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	Google     UserLoginType = "Google"
+	Credential UserLoginType = "Credential"
+)
+
 type (
-	User struct {
-		ID             uint   `gorm:"primaryKey;autoIncrement"`
-		Email          string `gorm:"column:email;unique;not null"`
-		Fullname       string `gorm:"column:fullname"`
-		HashedPassword string `gorm:"column:hashed_password"`
-		CreatedAt      time.Time
-		UpdatedAt      time.Time
-		DeletedAt      gorm.DeletedAt
+	UserLoginType string
+	User          struct {
+		ID                uint          `gorm:"primaryKey;autoIncrement"`
+		Email             string        `gorm:"column:email;unique;not null"`
+		Fullname          string        `gorm:"column:fullname"`
+		HashedPassword    string        `gorm:"column:hashed_password"`
+		Type              UserLoginType `gorm:"column:type;default:Credential"`
+		CreatedAt         time.Time
+		UpdatedAt         time.Time
+		DeletedAt         gorm.DeletedAt
 	}
+
+	UserSlice []User
 
 	PasswordReset struct {
 		ID        uint `gorm:"primaryKey;autoIncrement"`
@@ -50,16 +59,27 @@ type (
 		Token string `json:"token"`
 	}
 
+	// GoogleLoginRequest GoogleLoginRequest
+	GoogleLoginRequest struct {
+		Token string `json:"token" validate:"required"`
+	}
+
+	GoogleData struct {
+		Sub           string `json:"sub"`
+		Name          string `json:"name"`
+		GivenName     string `json:"given_name"`
+		FamilyName    string `json:"family_name"`
+		Picture       string `json:"picture"`
+		Email         string `json:"email"`
+		EmailVerified string `json:"email_verified"`
+		Locale        string `json:"locale"`
+	}
+
 	// EditUserRequest EditUserRequest
 
 	EditUserRequest struct {
-		Fullname string `json:"fullname" validate:"required"`
-	}
-
-	EditUserPayload struct {
-		Fullname string
-		ID       float64
-		Email    string
+		Fullname string `json:"fullname" validate:"omitempty"`
+		Password string `json:"password" validate:"omitempty"`
 	}
 
 	// EditUserResponse EditUserResponse
@@ -80,10 +100,18 @@ type (
 	}
 )
 
+func (g GoogleData) ToUser() User {
+	return User{
+		Fullname:          g.Name,
+		Email:             g.Email,
+		Type:              Google,
+	}
+}
+
 func (r *CreateUserRequest) TransformToUserModel(hp string) User {
 	return User{
-		Email:          r.Email,
-		Fullname:       r.Fullname,
-		HashedPassword: hp,
+		Email:             r.Email,
+		Fullname:          r.Fullname,
+		HashedPassword:    hp,
 	}
 }
