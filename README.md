@@ -1,5 +1,5 @@
 # Go Web Boilerplate
-This boilerplate is for applications using go with Postgres as the database.<br>
+This boilerplate is for applications using go with Postgres.<br>
 Lib used:<br>
 - github.com/go-playground/validator/v10 
 - github.com/goccy/go-json 
@@ -48,4 +48,4 @@ This will generate an executable file named `<YourAppName>`.
 Feel free to contribute, this project will be greater for anyone.
 
 ## Authors
-[Nofaldi Atmam](https://github.com/nofamex) | [Haikal Susanto](https://github.com/haikalSusanto) | [Eugenius Mario](https://github.com/eugeniusms)
+[@Nofaldi Atmam](https://github.com/nofamex), [@Haikal Susanto](https://github.com/haikalSusanto), [@Eugenius Mario](https://github.com/eugeniusms)
